@@ -12,13 +12,16 @@ class BasePreprocessor():
     Subclasses need only implement a class to build the pipeline object
     """
     def __init__(self):
-        self.pipeline = Pipeline()
+        self.pipeline = Pipeline(steps=[])
         self.column_types = {'categorical':[], 'numeric':[], 'date':[]}
 
     def _find_column_types(self, data:DataFrame):
         """
         assigns columns to a data type to assure preprocessing steps
         are correctly applied.
+
+        if a column is not assigned a data type it is not transformed and therefore 
+        is removed from the data
 
         params:
         ------
@@ -32,6 +35,8 @@ class BasePreprocessor():
                 self.column_types['categorical'].append(col)
             elif inferred_dtype in ('datetime', 'date', 'datetime64'):
                 self.column_types['date'].append(col)
+            else:
+                continue
 
     def _build_pipeline(self):
         raise NotImplementedError('Implemented by subclasses')
@@ -71,10 +76,13 @@ class BasicPreprocessor(BasePreprocessor):
         preprocessor = ColumnTransformer(
             transformers=[
                 ('num', numeric_transformer, self.column_types['numeric']),
-                ('cat', numeric_transformer, self.column_types['categorical']),
-                ('date', numeric_transformer, self.column_types['date']),
+                ('cat', categorical_transformer, self.column_types['categorical']),
+                ('date', date_transformer, self.column_types['date']),
             ]
         )
+
+        self.pipeline = preprocessor
+
         
 
 
