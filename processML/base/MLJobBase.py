@@ -4,6 +4,7 @@ from typing import List, Optional
 from data_connector import CeloConnector
 from data_model import Field, Filter
 from preprocessors import BasePreprocessor
+from evaluators import BaseEvaluator
 from pandas import DataFrame
 
 class MLJobBase():
@@ -36,6 +37,7 @@ class MLJobBase():
     #Configurable Class Attributes
     name: str
     model: BaseEstimator
+    evaluator: BaseEvaluator
     target: Field
     predictors: List[Field]
     training_objects_filter: Optional[Filter]
@@ -70,24 +72,25 @@ class MLJobBase():
         uses the preprocessor defined on class to preprocess that data
         """
         if self.preprocessor is None:
-            return
+            return data
         
         return self.preprocessor.transform(data)
         
-    def train_model(self, data:DataFrame) -> BaseEstimator:
+    def train_model(self, data:DataFrame):
         """
-        fits the model to the data 
+        fits the model to the data. Returns the evaluation
         """
         target_data, predictors_data = data[self.target.column], data[[i.column for i in self.predictors]]
+        predictors_data = self.preprocess_data(data)
         X_train, X_test, y_train, y_test = train_test_split(predictors_data, target_data)
-
         self.model.fit(X_train, y_train)
-
         self.evaluate_model(X_test, y_test)
 
-    def evaluate_model(self) -> dict:
-        pass
 
+    def evaluate_model(self, X_test, y_test) -> dict:
+        return self.evaluator.evaluate(self.model, X_test, y_test)
+
+    
     def write_predictions(self):
         pass
 
