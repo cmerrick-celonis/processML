@@ -39,14 +39,16 @@ class CeloConnector():
         except:
             PyCelonisNotFoundError(f'Data pool with id {data_pool_id} cannot be found in the celonis instance.') 
             raise
+
         try:
             self.data_model = self.data_pool.get_data_model(data_model_id)
-            self.data_model_tables = {t.name:t for t in self.data_model.get_tables()}
         except PyCelonisPermissionError:
             logging.error(f'Insufficient permissions to access data pool - see Admin and Permissions in your celonis instance')
             raise 
         except:
             PyCelonisNotFoundError(f'Data model with id {data_model_id} cannot be found in the celonis instance.') 
+            raise
+        
         try:
             self.knowledge_model = celonis.studio.get_spaces().find(space_name).get_packages().find(package_name).get_knowledge_models().find(knowledge_model_name)
         except PyCelonisPermissionError:
