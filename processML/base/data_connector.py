@@ -1,12 +1,17 @@
+"""
+Base class for connecting to a celonis instance with simplified methods for extraction and upload
+"""
+
 from pycelonis import get_celonis
 from pycelonis_core.utils.errors import PyCelonisPermissionError, PyCelonisNotFoundError
 import pycelonis.pql as pql
 from pycelonis.pql.saola_connector import KnowledgeModelSaolaConnector
 from pandas import DataFrame
-from .data_model import Field
-from typing import List
+from .data_model import Field, Filter
+from typing import List, Optional
 import logging
-from utils.data_extraction import create_column_config_from_dataframe, transform_columns_to_pql_query
+from utils.data_extraction import create_pql_query
+from utils.data_upload import create_column_config_from_dataframe
 
 class CeloConnector():
     """
@@ -62,19 +67,20 @@ class CeloConnector():
 
 
     
-    def run_query(self, columns:List[Field])->pql.DataFrame:
+    def run_query(self, fields:List[Field], filter:Optional[Filter]=None)->pql.DataFrame:
         """
         executes a PQL query string agaisnt the loaded data model to extracts data from the ems
 
         params
         ------
-        columns: the list of columns to extract
+        fields: the list of columns to extract
+        filter: a filter for the extract
 
         returns
         -------
-        data_extract: a PQL dataframe containing the data extract.
+        pql_df: a PQL dataframe containing the data extract.
         """
-        query = transform_columns_to_pql_query(columns)
+        query = create_pql_query(fields, filter)
         pql_df = pql.DataFrame.from_pql(query=query, saola_connector=self.saola_connector)
         return pql_df
         

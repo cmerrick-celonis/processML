@@ -1,8 +1,12 @@
+"""
+Implements the base class for building ML jobs in Celonis
+"""
+
 import unittest
 from unittest.mock import patch, MagicMock
-from utils.data_extraction import transform_columns_to_pql_query
+from utils.data_extraction import create_pql_query
 import pycelonis.pql as pql
-from base.data_model import Field
+from base.data_model import Field, Filter
 from base.data_connector import CeloConnector
 from pycelonis_core.utils.errors import PyCelonisNotFoundError, PyCelonisPermissionError
 
@@ -191,19 +195,61 @@ class TestDataConnector(unittest.TestCase):
                 knowledge_model_name=self.knowledge_model_name
             )
 
-    def test_transform_columns_to_pql_query(self):
+    def test_create_pql_query_field(self):
         """
         tests the helper function that transforms field objects 
         into pql columns
         """
-        columns = [
+        fields = [
             Field(table='o_celonis_SalesOrder', column='NetAmount'),
             Field(table='o_celonis_SalesOrder', column='DocumentType'),
             Field(table='o_celonis_SalesOrder', column='SalesOrg'),
         ]
-        query = transform_columns_to_pql_query(columns)
+        query = create_pql_query(fields)
  
         self.assertIsInstance(query, pql.PQL)
         self.assertEqual(len(query.columns), 3)
+    
+    def test_create_pql_query_fields_and_filter(self):
+        fields = [
+            Field(table='o_celonis_SalesOrder', column='NetAmount'),
+            Field(table='o_celonis_SalesOrder', column='DocumentType'),
+            Field(table='o_celonis_SalesOrder', column='SalesOrg'),
+        ]
+        filt = Filter(pql='Filter "o_celonis_SalesOrder"."Status" = \'open\';')
+        query = create_pql_query(fields, filt)
+        self.assertIsInstance(query, pql.PQL)
+        self.assertEqual(len(query.filters), 1)
 
-        
+    @patch('base.data_connector.get_celonis')
+    @patch('base.data_connector.KnowledgeModelSaolaConnector')
+    def test_run_query_no_filter(self, mock_get_celonis, MockKnowledgeModelSaolaConnector):
+        mock_celonis_instance = MagicMock()
+        mock_get_celonis.return_value = mock_celonis_instance
+
+        celo_connetctor = CeloConnector(
+            base_url=self.base_url,
+            api_token=self.api_token,
+            key_type=self.key_type,
+            data_pool_id=self.data_pool_id,
+            data_model_id=self.data_model_id,
+            space_name=self.space_name,
+            package_name=self.package_name,
+            knowledge_model_name=self.knowledge_model_name
+        )
+
+        fields = [
+            Field(table='o_celonis_SalesOrder', column='NetAmount'),
+            Field(table='o_celonis_SalesOrder', column='DocumentType'),
+            Field(table='o_celonis_SalesOrder', column='SalesOrg'),
+        ]
+
+        pql_df = celo_connetctor.run_query(fields)
+
+        self.assertIsInstance(pql_df, pql.DataFrame)
+        self.assertEqual(len(pql_df.columns), 3)
+        self.assertTrue('NetAmount' in pql_df.columns)
+
+
+
+

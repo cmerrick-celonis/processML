@@ -1,15 +1,13 @@
 from sklearn.base import BaseEstimator
-from typing import List
+from typing import List, Optional
 from data_connector import CeloConnector
-from data_model import Field
+from data_model import Field, Filter
 from pandas import DataFrame
 
 class MLJobBase():
     """
     The base class representing a machine learning job defined with processML
-    in Celonis. An ML job should know how to extract data from celonis, preprocess
-    this data, train an sklearn classifier and write any predictions back into 
-    the data model in celonis.
+    in Celonis. Designed to allow customizable configuration.
 
     For help on connecting to celonis with python see: 
     https://celonis.github.io/pycelonis/2.8.0/tutorials/executed/01_quickstart/02_celonis_basics/#12-connect-to-the-ems
@@ -27,25 +25,43 @@ class MLJobBase():
     knowledge_model_name: the name of the knowledge model in the package
     model: the sklearn model 
     target: the variable we are trying to predict - written in PQL
-    predictors: the set of variables to use of predictors for the target - written in PQL
+    predictors: the set of variables to use of predictors for the target - written in PQL.
+    training_objects_filter: a filter that selects the objects that are relevant for training a model. For example, when predicting
+    delivery date, orders that are not delivered are not relevant. Objects that return false agaisnt this filter are the ones
+    we want to predict values for!
     """
+
+    #Configurable Class Attributes
+    name: str = 'Default Job'
+    model: BaseEstimator = None
+    target: Field = None
+    predictors: List[Field] = None
+    training_objects_filter: Optional[Filter] = None
+    
     
     def __init__(self, name:str, base_url:str, api_token:str, key_type:str, data_pool_id:str, data_model_id:str, space_name:str,
-                 package_name:str, knowledge_model_name:str, model:BaseEstimator, target:Field, predictors:List[Field]):
-        
+                 package_name:str, knowledge_model_name:str):
         self.name = name
         self.celonis_connection = CeloConnector(base_url, api_token, key_type, data_model_id, data_pool_id, space_name, package_name, knowledge_model_name)
-        self.model = None #ModelTrainer(model)
-        self.target = target
-        self.predictors = predictors
+
         
-    
-    def extract_data(self) -> DataFrame:
+    def extract_data(self, filter:Optional[Filter]) -> DataFrame:
         """
         extracts the data for the target and the predictors as a pandas dataframe. 
+
+        params:
+        -------
+        filter: pass an optional pql filter to the data
         """
-        pass
+        if self.predictors:
+            fields = self.predictors + self.target
+        else:
+            fields = [self.target]
         
+        pql_dataframe = self.celonis_connection.run_query(fields, filter)
+
+        return pql_dataframe.to_pandas()
+
 
     def preprocess_data(self):
         raise NotImplemented('This method should be implemented in the child class')
@@ -57,5 +73,3 @@ class MLJobBase():
         pass
 
     
-
-
