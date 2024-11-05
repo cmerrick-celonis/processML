@@ -1,4 +1,5 @@
 from sklearn.base import BaseEstimator
+from sklearn.pipeline import Pipeline
 from typing import List, Optional
 from data_connector import CeloConnector
 from data_model import Field, Filter
@@ -37,6 +38,7 @@ class MLJobBase():
     target: Field = None
     predictors: List[Field] = None
     training_objects_filter: Optional[Filter] = None
+    preprocessor: Pipeline = None
     
     
     def __init__(self, base_url:str, api_token:str, key_type:str, data_pool_id:str, data_model_id:str, space_name:str,
