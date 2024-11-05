@@ -23,3 +23,9 @@ class DateTransformer(BaseEstimator, TransformerMixin):
         Features["hour"] = X.dt.hour
         Features["minute"] = X.dt.minute
         return Features
+
+    def get_feature_names_out(self):
+        """
+        Return feature names for output DataFrame columns.
+        """
+        return ["year", "month", "day", "dow", "quarter", "hour", "minute"]

@@ -20,8 +20,8 @@ class BasePreprocessor():
         assigns columns to a data type to assure preprocessing steps
         are correctly applied.
 
-        if a column is not assigned a data type it is not transformed and therefore 
-        is removed from the data
+        if a column is not assigned a data type it is passed through the transformations
+        to the final dataset
 
         params:
         ------
@@ -66,7 +66,7 @@ class BasicPreprocessor(BasePreprocessor):
         ])
 
         categorical_transformer = Pipeline([
-            ('encoder', preprocessing.OneHotEncoder(handle_unknown='ignore'))
+            ('encoder', preprocessing.OneHotEncoder(handle_unknown='ignore', sparse_output=False))
         ])
 
         date_transformer = Pipeline([
@@ -78,8 +78,10 @@ class BasicPreprocessor(BasePreprocessor):
                 ('num', numeric_transformer, self.column_types['numeric']),
                 ('cat', categorical_transformer, self.column_types['categorical']),
                 ('date', date_transformer, self.column_types['date']),
-            ]
+            ],
+            remainder='passthrough'
         )
+        preprocessor.set_output(transform='pandas')
 
         self.pipeline = preprocessor
 

@@ -1,5 +1,4 @@
 from sklearn.base import BaseEstimator
-from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
 from typing import List, Optional
 from data_connector import CeloConnector
@@ -74,10 +73,6 @@ class MLJobBase():
             return
         
         return self.preprocessor.transform(data)
-        
-
-        
-
         
     def train_model(self, data:DataFrame) -> BaseEstimator:
         """
