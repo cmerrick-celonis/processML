@@ -1,5 +1,8 @@
 from sklearn.base import BaseEstimator
 from typing import List
+from data_connector import CeloConnector
+from data_model import Field
+from pandas import DataFrame
 
 class MLJobBase():
     """
@@ -17,24 +20,32 @@ class MLJobBase():
     base_url: the url of the celonis instance your are trying to connect to
     api_token: an api token with the correct permission for the instance you are connecting to
     key_type: a user key or an app key
-    model: the sklearn model you want to use to learn from the data
+    data_pool_id: the id of the data pool 
+    data_model_id: the id of the data model
+    space_name: the name of the space that contains the knowledge model
+    package_name: the name of the package that contains the knowledge model
+    knowledge_model_name: the name of the knowledge model in the package
+    model: the sklearn model 
     target: the variable we are trying to predict - written in PQL
-    predictors: the set of variables to use of predictors for the target - written in PQL format
-
+    predictors: the set of variables to use of predictors for the target - written in PQL
     """
-
-    def __init__(self, name:str, base_url:str, api_token:str, key_type:str, model:BaseEstimator,
-                 target:str, predictors:List[str]):
+    
+    def __init__(self, name:str, base_url:str, api_token:str, key_type:str, data_pool_id:str, data_model_id:str, space_name:str,
+                 package_name:str, knowledge_model_name:str, model:BaseEstimator, target:Field, predictors:List[Field]):
+        
         self.name = name
-        self.connector = None #CeloConnector(base_url, api_token, )
+        self.celonis_connection = CeloConnector(base_url, api_token, key_type, data_model_id, data_pool_id, space_name, package_name, knowledge_model_name)
         self.model = None #ModelTrainer(model)
         self.target = target
         self.predictors = predictors
-        self.writer = None
         
     
-    def extract_data(self):
+    def extract_data(self) -> DataFrame:
+        """
+        extracts the data for the target and the predictors as a pandas dataframe. 
+        """
         pass
+        
 
     def preprocess_data(self):
         raise NotImplemented('This method should be implemented in the child class')
@@ -45,5 +56,6 @@ class MLJobBase():
     def write_predictions(self):
         pass
 
+    
 
 
