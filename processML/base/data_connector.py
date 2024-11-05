@@ -105,6 +105,7 @@ class CeloConnector():
         
         new_data_model_table = self.data_model.add_table(new_data_pool_table)
         #TODO: create foreign key to object table
+        
         #TODO: check if table exists
         #TODO: refresh data model.
 

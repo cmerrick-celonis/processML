@@ -15,7 +15,6 @@ class Field(BaseModel):
         """
         return f'"{self.table}"."{self.column}"'
 
-
 class Filter(BaseModel):
     """
     filter to apply to a query.

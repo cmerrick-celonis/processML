@@ -1,8 +1,10 @@
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
 from typing import List, Optional
 from data_connector import CeloConnector
 from data_model import Field, Filter
+from preprocessors import BasePreprocessor
 from pandas import DataFrame
 
 class MLJobBase():
@@ -33,12 +35,13 @@ class MLJobBase():
     """
 
     #Configurable Class Attributes
-    name: str = 'Default Job'
-    model: BaseEstimator = None
-    target: Field = None
-    predictors: List[Field] = None
-    training_objects_filter: Optional[Filter] = None
-    preprocessor: Pipeline = None
+    name: str
+    model: BaseEstimator
+    target: Field
+    predictors: List[Field]
+    training_objects_filter: Optional[Filter]
+    preprocessor: Optional[BasePreprocessor]
+    param_grid: Optional[dict]
     
     
     def __init__(self, base_url:str, api_token:str, key_type:str, data_pool_id:str, data_model_id:str, space_name:str,
@@ -46,13 +49,12 @@ class MLJobBase():
         
         self.celonis_connection = CeloConnector(base_url, api_token, key_type, data_model_id, data_pool_id, space_name, package_name, knowledge_model_name)
 
-        
     def extract_data(self, filter:Optional[Filter]) -> DataFrame:
         """
         extracts the data for the target and the predictors as a pandas dataframe. 
 
         params:
-        -------
+        ------
         filter: pass an optional pql filter to the data
         """
         if self.predictors:
@@ -64,11 +66,31 @@ class MLJobBase():
 
         return pql_dataframe.to_pandas()
 
+    def preprocess_data(self, data:DataFrame) -> DataFrame:
+        """
+        uses the preprocessor defined on class to preprocess that data
+        """
+        if self.preprocessor is None:
+            return
+        
+        return self.preprocessor.transform(data)
+        
 
-    def preprocess_data(self):
-        raise NotImplemented('This method should be implemented in the child class')
-    
-    def train_model(self):
+        
+
+        
+    def train_model(self, data:DataFrame) -> BaseEstimator:
+        """
+        fits the model to the data 
+        """
+        target_data, predictors_data = data[self.target.column], data[[i.column for i in self.predictors]]
+        X_train, X_test, y_train, y_test = train_test_split(predictors_data, target_data)
+
+        self.model.fit(X_train, y_train)
+
+        self.evaluate_model(X_test, y_test)
+
+    def evaluate_model(self) -> dict:
         pass
 
     def write_predictions(self):
