@@ -39,9 +39,9 @@ class MLJobBase():
     training_objects_filter: Optional[Filter] = None
     
     
-    def __init__(self, name:str, base_url:str, api_token:str, key_type:str, data_pool_id:str, data_model_id:str, space_name:str,
+    def __init__(self, base_url:str, api_token:str, key_type:str, data_pool_id:str, data_model_id:str, space_name:str,
                  package_name:str, knowledge_model_name:str):
-        self.name = name
+        
         self.celonis_connection = CeloConnector(base_url, api_token, key_type, data_model_id, data_pool_id, space_name, package_name, knowledge_model_name)
 
         
